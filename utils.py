@@ -20,10 +20,7 @@ def parse_at_message(message):
         timestamp = parts[5]
         
         # Parse time difference (handle the + or - prefix)
-        if time_diff_str.startswith('+'):
-            time_diff = float(time_diff_str[1:])
-        else:
-            time_diff = float(time_diff_str)
+        time_diff = parse_time_diff(time_diff_str)
         
         return {
             'server_id': server_id,
@@ -45,8 +42,7 @@ def validate_iamat_command(parts):
         return False
     
     # Validate location format (should match ISO 6709, like +34.068930-118.445127)
-    location_pattern = r'^[+-]\d+\.\d+[+-]\d+\.\d+$'
-    if not re.match(location_pattern, parts[2]):
+    if not validate_location_format(parts[2]):
         return False
     
     # Validate timestamp (should be a valid float)
@@ -55,6 +51,11 @@ def validate_iamat_command(parts):
         return True
     except ValueError:
         return False
+
+def validate_location_format(location_str):
+    """Validate location string in ISO 6709 format"""
+    location_pattern = r'^[+-]\d+\.\d+[+-]\d+\.\d+$'
+    return bool(re.match(location_pattern, location_str))
     
 def validate_whatsat_command(parts):
     """Validate a WHATSAT command format"""
@@ -78,10 +79,20 @@ def validate_whatsat_command(parts):
     except ValueError:
         return False
 
+def format_time_diff(time_diff):
+    """Format time difference with appropriate sign"""
+    return f"+{time_diff}" if time_diff >= 0 else f"{time_diff}"
+
+def parse_time_diff(time_diff_str):
+    """Parse time difference string to float"""
+    if time_diff_str.startswith('+'):
+        return float(time_diff_str[1:])
+    else:
+        return float(time_diff_str)
+
 def format_flood_message(server_id, client_info):
     """Format a message for flooding to other servers"""
-    time_diff = client_info['time_diff']
-    time_diff_str = f"+{time_diff}" if time_diff >= 0 else f"{time_diff}"
+    time_diff_str = format_time_diff(client_info['time_diff'])
     
     return (f"AT {server_id} {time_diff_str} {client_info['client_id']} "
             f"{client_info['location']} {client_info['timestamp']}")
@@ -102,3 +113,33 @@ def has_seen_message(message_id, seen_messages, max_seen=MAX_SEEN_MESSAGES):
 def generate_message_id(server_id, client_id, timestamp):
     """Generate a unique ID for a message to prevent loops in propagation"""
     return f"{server_id}:{client_id}:{timestamp}"
+
+def parse_location(location_str):
+    """
+    Parse location string in ISO 6709 format (e.g., +34.068930-118.445127)
+    
+    Args:
+        location_str (str): Location string in ISO 6709 format
+    
+    Returns:
+        tuple: (latitude, longitude) as floats
+    """
+    # Check for valid format
+    if not validate_location_format(location_str):
+        raise ValueError(f"Invalid location format: {location_str}")
+    
+    # Determine where the longitude starts by finding the sign after the first digit
+    lat_end = 0
+    for i in range(1, len(location_str)):
+        if location_str[i] in ('+', '-'):
+            lat_end = i
+            break
+    
+    if lat_end == 0:
+        raise ValueError(f"Cannot parse location: {location_str}")
+    
+    # Extract latitude and longitude
+    latitude = float(location_str[:lat_end])
+    longitude = float(location_str[lat_end:])
+    
+    return latitude, longitude

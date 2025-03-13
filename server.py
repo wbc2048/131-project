@@ -7,11 +7,11 @@ from config import (
 )
 from utils import (
     parse_at_message, validate_iamat_command, validate_whatsat_command,
-    generate_message_id
+    generate_message_id, format_time_diff, parse_location
 )
 from logger import ServerLogger
 from proxy import ServerProxy
-from api import parse_location, get_nearby_places
+from api import get_nearby_places
 
 # Store client locations (shared between all instances)
 client_locations = {}
@@ -23,6 +23,9 @@ class ProxyServer:
         self.logger = ServerLogger(server_id)
         self.proxy = ServerProxy(server_id, self.logger)
         self.server = None  # Will hold the asyncio server instance
+        
+        # Register message handler
+        self.proxy.register_message_handler(self.process_server_message)
     
     async def start(self):
         """Start the server and connect to neighbors"""
@@ -114,7 +117,7 @@ class ProxyServer:
                 await self.proxy.propagate_location(client_info)
                 
                 # Format response
-                time_diff_str = f"+{time_diff}" if time_diff >= 0 else f"{time_diff}"
+                time_diff_str = format_time_diff(time_diff)
                 return f"AT {self.server_id} {time_diff_str} {client_id} {location} {timestamp}"
                 
             except ValueError:
@@ -135,7 +138,7 @@ class ProxyServer:
                 
                 client_info = client_locations[client_id]
                 time_diff = client_info['time_diff']
-                time_diff_str = f"+{time_diff}" if time_diff >= 0 else f"{time_diff}"
+                time_diff_str = format_time_diff(time_diff)
                 
                 at_response = f"AT {client_info['server_id']} {time_diff_str} {client_info['client_id']} {client_info['location']} {client_info['timestamp']}"
                 

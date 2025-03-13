@@ -8,12 +8,12 @@ import os
 import time
 from config import LOG_FORMAT, LOG_LEVEL
 
-def setup_logger(server_id):
+def setup_logger(name):
     """
-    Set up a logger for the specified server ID.
+    Set up a logger with the specified name.
     
     Args:
-        server_id (str): The ID of the server
+        name (str): The name for the logger
         
     Returns:
         logging.Logger: Configured logger instance
@@ -24,14 +24,14 @@ def setup_logger(server_id):
         os.makedirs(log_dir)
     
     # Configure the logger
-    logger = logging.getLogger(server_id)
+    logger = logging.getLogger(name)
     log_level = getattr(logging, LOG_LEVEL)
     logger.setLevel(log_level)
     
     # Prevent duplicate handlers when the function is called multiple times
     if not logger.handlers:
         # Log to file with rotation
-        log_file = os.path.join(log_dir, f"{server_id}.log")
+        log_file = os.path.join(log_dir, f"{name}.log")
         file_handler = logging.FileHandler(log_file)
         file_formatter = logging.Formatter(LOG_FORMAT)
         file_handler.setFormatter(file_formatter)

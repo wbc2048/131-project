@@ -24,6 +24,7 @@ class ServerProxy:
         self.connections = {}  # Store connections to other servers
         self.seen_messages = set()  # Track seen messages to prevent loops
         self.connection_tasks = {}  # Track connection tasks
+        self.message_handlers = []  # Callbacks for message handling
     
     async def connect_to_all_neighbors(self):
         """Start connection tasks for all neighbors"""
@@ -71,8 +72,9 @@ class ServerProxy:
                 message = data.decode().strip()
                 self.logger.command_received(f"server {server_id}", message)
                 
-                # Forward the message to the message handler
-                yield message
+                # Forward the message to all registered handlers
+                for handler in self.message_handlers:
+                    await handler(server_id, message)
                 
         except (ConnectionResetError, ConnectionError) as e:
             self.logger.warning(f"Server connection error with {server_id}: {e}")
@@ -87,6 +89,10 @@ class ServerProxy:
             
             # Try to reconnect
             self.connection_tasks[server_id] = asyncio.create_task(self.connect_to_server(server_id))
+    
+    def register_message_handler(self, handler):
+        """Register a callback for handling messages from other servers"""
+        self.message_handlers.append(handler)
     
     async def send_to_server(self, server_id, message):
         """Send a message to a specific server"""
@@ -152,12 +158,9 @@ class ServerProxy:
         )
         
         # Check if we've seen this message before to prevent loops
-        if message_id in self.seen_messages:
+        if has_seen_message(message_id, self.seen_messages):
             self.logger.info(f"Skipping propagation of already seen message {message_id}")
             return []
-        
-        # Add to seen messages
-        self.seen_messages.add(message_id)
         
         # Format the message for propagation
         message = format_flood_message(client_info['server_id'], client_info)

@@ -2,22 +2,24 @@
 import aiohttp
 import json
 import re
-import logging
-from config import MAX_RADIUS_KM, MAX_INFO_LIMIT
+from logger import setup_logger
+from config import (
+    MAX_RADIUS_KM, MAX_INFO_LIMIT, 
+    PLACES_API_BASE_URL, PLACES_API_HEADERS
+)
+from utils import parse_location
 
 # Import API key from separate file (not in version control)
 try:
     from api_key import API_KEY
 except ImportError:
-    logging.error("API key file not found! Please create api_key.py with your Google Places API key.")
+    logger = setup_logger("api")
+    logger.error("API key file not found! Please create api_key.py with your Google Places API key.")
     API_KEY = "YOUR_API_KEY_GOES_HERE"  # This will cause API requests to fail
-
-# Updated Google Places API endpoint
-PLACES_API_BASE_URL = "https://places.googleapis.com/v1/places:searchNearby"
 
 async def get_nearby_places(latitude, longitude, radius_km, limit):
     """
-    Query the Google Places API for nearby places using the new v1 API
+    Query the Google Places API for nearby places using the v1 API
     
     Args:
         latitude (float): Latitude in decimal degrees
@@ -34,10 +36,10 @@ async def get_nearby_places(latitude, longitude, radius_km, limit):
     # Ensure limit is respected
     limit = min(limit, MAX_INFO_LIMIT)
     
-    logger = logging.getLogger('places_api')
+    logger = setup_logger('places_api')
     logger.debug(f"Requesting places data with radius={radius_km}km, limit={limit}")
     
-    # Prepare the request body for the new API
+    # Prepare the request body for the API
     request_body = {
         "locationRestriction": {
             "circle": {
@@ -53,15 +55,14 @@ async def get_nearby_places(latitude, longitude, radius_km, limit):
     
     try:
         async with aiohttp.ClientSession() as session:
-            # New API requires a POST request with JSON body
+            # API requires a POST request with JSON body
+            headers = PLACES_API_HEADERS.copy()
+            headers["X-Goog-Api-Key"] = API_KEY
+            
             async with session.post(
                 PLACES_API_BASE_URL,
                 json=request_body,
-                headers={
-                    "Content-Type": "application/json",
-                    "X-Goog-Api-Key": API_KEY,
-                    "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.websiteUri,places.types"
-                }
+                headers=headers
             ) as response:
                 if response.status != 200:
                     logger.error(f"API request failed with status {response.status}")
@@ -88,34 +89,3 @@ async def get_nearby_places(latitude, longitude, radius_km, limit):
     except Exception as e:
         logger.error(f"Error accessing Google Places API: {str(e)}")
         return json.dumps({"error": f"Error accessing Google Places API: {str(e)}"})
-
-def parse_location(location_str):
-    """
-    Parse location string in ISO 6709 format (e.g., +34.068930-118.445127)
-    
-    Args:
-        location_str (str): Location string in ISO 6709 format
-    
-    Returns:
-        tuple: (latitude, longitude) as floats
-    """
-    # Check for valid format
-    import re
-    if not re.match(r'^[+-]\d+\.\d+[+-]\d+\.\d+$', location_str):
-        raise ValueError(f"Invalid location format: {location_str}")
-    
-    # Determine where the longitude starts by finding the sign after the first digit
-    lat_end = 0
-    for i in range(1, len(location_str)):
-        if location_str[i] in ('+', '-'):
-            lat_end = i
-            break
-    
-    if lat_end == 0:
-        raise ValueError(f"Cannot parse location: {location_str}")
-    
-    # Extract latitude and longitude
-    latitude = float(location_str[:lat_end])
-    longitude = float(location_str[lat_end:])
-    
-    return latitude, longitude

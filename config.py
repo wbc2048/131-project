@@ -52,4 +52,9 @@ LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 LOG_LEVEL = 'INFO'  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 # Google Places API settings
-PLACES_API_BASE_URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
+# Updated to use the new v1 API
+PLACES_API_BASE_URL = "https://places.googleapis.com/v1/places:searchNearby"
+PLACES_API_HEADERS = {
+    "Content-Type": "application/json",
+    "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.websiteUri,places.types"
+}
