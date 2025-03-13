@@ -1,9 +1,9 @@
-`#!/usr/bin/env python3
+#!/usr/bin/env python3
 import aiohttp
 import json
 import re
 import logging
-from config import PLACES_API_BASE_URL, MAX_RADIUS_KM, MAX_INFO_LIMIT
+from config import MAX_RADIUS_KM, MAX_INFO_LIMIT
 
 # Import API key from separate file (not in version control)
 try:
@@ -12,9 +12,12 @@ except ImportError:
     logging.error("API key file not found! Please create api_key.py with your Google Places API key.")
     API_KEY = "YOUR_API_KEY_GOES_HERE"  # This will cause API requests to fail
 
+# Updated Google Places API endpoint
+PLACES_API_BASE_URL = "https://places.googleapis.com/v1/places:searchNearby"
+
 async def get_nearby_places(latitude, longitude, radius_km, limit):
     """
-    Query the Google Places API for nearby places
+    Query the Google Places API for nearby places using the new v1 API
     
     Args:
         latitude (float): Latitude in decimal degrees
@@ -32,32 +35,44 @@ async def get_nearby_places(latitude, longitude, radius_km, limit):
     limit = min(limit, MAX_INFO_LIMIT)
     
     logger = logging.getLogger('places_api')
-    
-    # Construct the URL
-    url = (
-        f"{PLACES_API_BASE_URL}"
-        f"?location={latitude},{longitude}"
-        f"&radius={radius_m}"
-        f"&key={API_KEY}"
-    )
-    
     logger.debug(f"Requesting places data with radius={radius_km}km, limit={limit}")
+    
+    # Prepare the request body for the new API
+    request_body = {
+        "locationRestriction": {
+            "circle": {
+                "center": {
+                    "latitude": latitude,
+                    "longitude": longitude
+                },
+                "radius": radius_m
+            }
+        },
+        "maxResultCount": limit
+    }
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
+            # New API requires a POST request with JSON body
+            async with session.post(
+                PLACES_API_BASE_URL,
+                json=request_body,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": API_KEY,
+                    "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.websiteUri,places.types"
+                }
+            ) as response:
                 if response.status != 200:
                     logger.error(f"API request failed with status {response.status}")
+                    error_text = await response.text()
                     return json.dumps({
                         "error": "Failed to retrieve data from Google Places API", 
-                        "status": response.status
+                        "status": response.status,
+                        "details": error_text
                     })
                 
                 data = await response.json()
-                
-                # Limit the number of results
-                if "results" in data and len(data["results"]) > limit:
-                    data["results"] = data["results"][:limit]
                 
                 # Format the JSON with indentation for readability
                 json_str = json.dumps(data, indent=3)
