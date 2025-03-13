@@ -54,16 +54,13 @@ def validate_whatsat_command(parts):
     if len(parts) != 4:
         return False
     
-    # Validate client_id (no whitespace)
     if any(c.isspace() for c in parts[1]):
         return False
     
-    # Validate radius and limit (should be integers)
     try:
         radius = int(parts[2])
         limit = int(parts[3])
         
-        # Check constraints
         if radius < 0 or radius > MAX_RADIUS_KM or limit < 0 or limit > MAX_INFO_LIMIT:
             return False
         
@@ -81,10 +78,8 @@ def parse_time_diff(time_diff_str):
         return float(time_diff_str)
 
 def format_flood_message(server_id, client_info):
-    """Format a message for flooding to other servers"""
     time_diff = client_info['time_diff']
     
-    # Format time difference with + sign if positive
     if time_diff >= 0:
         time_diff_str = f"+{time_diff}"
     else:
@@ -97,10 +92,8 @@ def has_seen_message(message_id, seen_messages, max_seen=MAX_SEEN_MESSAGES):
     if message_id in seen_messages:
         return True
     
-    # Add to seen messages, limit size to prevent memory issues
     seen_messages.add(message_id)
     if len(seen_messages) > max_seen:
-        # Remove oldest messages (this is simplified; in production you might want a more sophisticated approach)
         seen_messages.pop()
     
     return False

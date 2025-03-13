@@ -9,25 +9,21 @@ from config import (
 )
 from utils import parse_location
 
-# Import API key from separate file (not in version control)
 try:
     from api_key import API_KEY
 except ImportError:
     logger = setup_logger("api")
     logger.error("API key file not found! Please create api_key.py with your Google Places API key.")
-    API_KEY = "YOUR_API_KEY_GOES_HERE"  # This will cause API requests to fail
+    API_KEY = "YOUR_API_KEY_GOES_HERE"
 
 async def get_nearby_places(latitude, longitude, radius_km, limit):
-    # Convert km to meters for the API
     radius_m = min(radius_km, MAX_RADIUS_KM) * 1000
     
-    # Ensure limit is respected
     limit = min(limit, MAX_INFO_LIMIT)
     
     logger = setup_logger('places_api')
     logger.debug(f"Requesting places data with radius={radius_km}km, limit={limit}")
     
-    # Prepare the request body for the API
     request_body = {
         "locationRestriction": {
             "circle": {
@@ -43,7 +39,6 @@ async def get_nearby_places(latitude, longitude, radius_km, limit):
     
     try:
         async with aiohttp.ClientSession() as session:
-            # API requires a POST request with JSON body
             headers = PLACES_API_HEADERS.copy()
             headers["X-Goog-Api-Key"] = API_KEY
             
@@ -64,8 +59,8 @@ async def get_nearby_places(latitude, longitude, radius_km, limit):
                 data = await response.json()
                 
                 json_str = json.dumps(data, indent=3)
-                json_str = re.sub(r'\n{2,}', '\n', json_str)  # Replace multiple newlines with a single one
-                json_str = json_str.rstrip('\n')  # Remove any trailing newlines
+                json_str = re.sub(r'\n{2,}', '\n', json_str)
+                json_str = json_str.rstrip('\n')
                 return json_str
     
     except Exception as e:

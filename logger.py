@@ -5,26 +5,21 @@ import time
 from config import LOG_FORMAT, LOG_LEVEL
 
 def setup_logger(name):
-    # Create logs directory if it doesn't exist
     log_dir = "logs"
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     
-    # Configure the logger
     logger = logging.getLogger(name)
     log_level = getattr(logging, LOG_LEVEL)
     logger.setLevel(log_level)
     
-    # Prevent duplicate handlers when the function is called multiple times
     if not logger.handlers:
-        # Log to file with rotation
         log_file = os.path.join(log_dir, f"{name}.log")
         file_handler = logging.FileHandler(log_file)
         file_formatter = logging.Formatter(LOG_FORMAT)
         file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
         
-        # Also log to console for debugging
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(file_formatter)
         logger.addHandler(console_handler)

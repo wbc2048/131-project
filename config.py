@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 
-# Server information
 SERVER_IDS = ['Bailey', 'Bona', 'Campbell', 'Clark', 'Jaquez']
 
-# Port assignments for each server
 SERVER_PORTS = {
-    'Bailey': 12027,
-    'Bona': 12058,
-    'Campbell': 12089,
-    'Clark': 12120,
-    'Jaquez': 12151
+    'Bailey': 10000,
+    'Bona': 10001,
+    'Campbell': 10002,
+    'Clark': 10003,
+    'Jaquez': 10004
 }
 
-# Server communication topology as specified in the project
 SERVER_CONNECTIONS = {
     # Clark talks with Jaquez and Bona
     'Clark': ['Jaquez', 'Bona'],
@@ -23,32 +20,29 @@ SERVER_CONNECTIONS = {
     # Bona talks with Bailey (plus Clark and Campbell from above)
     'Bona': ['Bailey', 'Clark', 'Campbell'],
     
-    # Bailey's connections (derived from above rules)
     'Bailey': ['Bona', 'Campbell'],
     
-    # Jaquez's connections (derived from above rules)
     'Jaquez': ['Clark', 'Campbell']
 }
 
 # Network settings
-HOST = '127.0.0.1'  # Local host for development
-CONNECTION_RETRY_INITIAL = 1  # Initial retry delay in seconds
-CONNECTION_RETRY_MAX = 60     # Maximum retry delay in seconds
-CONNECTION_RETRY_FACTOR = 2   # Exponential backoff factor
+HOST = '127.0.0.1'
+CONNECTION_RETRY_INITIAL = 1
+CONNECTION_RETRY_MAX = 60
+CONNECTION_RETRY_FACTOR = 2
 
 # Command validation
-MAX_RADIUS_KM = 50   # Maximum radius for WHATSAT command
-MAX_INFO_LIMIT = 20  # Maximum info limit for WHATSAT command
+MAX_RADIUS_KM = 50
+MAX_INFO_LIMIT = 20
 
 # Message handling
-MAX_SEEN_MESSAGES = 1000  # Maximum number of seen messages to store (prevents memory leaks)
+MAX_SEEN_MESSAGES = 1000
 
 # Logging configuration
 LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-LOG_LEVEL = 'INFO'  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL = 'INFO'
 
 # Google Places API settings
-# Updated to use the new v1 API
 PLACES_API_BASE_URL = "https://places.googleapis.com/v1/places:searchNearby"
 PLACES_API_HEADERS = {
     "Content-Type": "application/json",
