@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Proxy communication module for the server herd.
-Handles inter-server connections, message flooding, and connection recovery.
-"""
 import asyncio
 import time
 from config import (
@@ -14,9 +10,6 @@ from utils import (
 )
 
 class ServerProxy:
-    """
-    Handles connections and communication between servers in the herd
-    """
     def __init__(self, server_id, logger):
         self.server_id = server_id
         self.logger = logger
@@ -27,13 +20,11 @@ class ServerProxy:
         self.message_handlers = []  # Callbacks for message handling
     
     async def connect_to_all_neighbors(self):
-        """Start connection tasks for all neighbors"""
         for neighbor in self.neighbors:
             if neighbor not in self.connection_tasks or self.connection_tasks[neighbor].done():
                 self.connection_tasks[neighbor] = asyncio.create_task(self.connect_to_server(neighbor))
     
     async def connect_to_server(self, server_id):
-        """Connect to another server in the herd with exponential backoff"""
         if server_id not in SERVER_PORTS:
             self.logger.error(f"Unknown server ID: {server_id}")
             return
@@ -62,7 +53,6 @@ class ServerProxy:
                 retry_delay = min(retry_delay * CONNECTION_RETRY_FACTOR, CONNECTION_RETRY_MAX)
     
     async def handle_server_connection(self, server_id, reader, writer):
-        """Handle ongoing connection with another server"""
         try:
             while True:
                 data = await reader.readline()
@@ -91,11 +81,9 @@ class ServerProxy:
             self.connection_tasks[server_id] = asyncio.create_task(self.connect_to_server(server_id))
     
     def register_message_handler(self, handler):
-        """Register a callback for handling messages from other servers"""
         self.message_handlers.append(handler)
     
     async def send_to_server(self, server_id, message):
-        """Send a message to a specific server"""
         if server_id not in self.connections:
             self.logger.warning(f"Cannot send to {server_id}: not connected")
             return False
@@ -111,17 +99,6 @@ class ServerProxy:
             return False
     
     async def flood_message(self, message, source_server=None, exclude=None):
-        """
-        Flood a message to all connected neighbors except those in exclude list
-        
-        Args:
-            message: The message to send
-            source_server: The server that sent us this message (to be excluded)
-            exclude: Additional servers to exclude
-        
-        Returns:
-            list: Servers that the message was successfully sent to
-        """
         if exclude is None:
             exclude = []
         
@@ -140,16 +117,6 @@ class ServerProxy:
         return sent_to
     
     async def propagate_location(self, client_info, source_server=None):
-        """
-        Propagate client location to neighbor servers
-        
-        Args:
-            client_info: Dictionary with client location details
-            source_server: The server that sent us this info (to be excluded)
-            
-        Returns:
-            list: Servers that the location was propagated to
-        """
         # Generate message ID for deduplication
         message_id = generate_message_id(
             client_info['server_id'], 
@@ -175,18 +142,15 @@ class ServerProxy:
         return sent_to
     
     def is_connected_to(self, server_id):
-        """Check if we are currently connected to a specific server"""
         return server_id in self.connections
     
     def get_connection_status(self):
-        """Get the connection status of all neighbors"""
         status = {}
         for neighbor in self.neighbors:
             status[neighbor] = neighbor in self.connections
         return status
     
     async def close_all_connections(self):
-        """Close all open connections"""
         for server_id, (_, writer) in self.connections.items():
             self.logger.info(f"Closing connection to {server_id}")
             writer.close()

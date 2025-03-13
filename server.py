@@ -28,7 +28,6 @@ class ProxyServer:
         self.proxy.register_message_handler(self.process_server_message)
     
     async def start(self):
-        """Start the server and connect to neighbors"""
         self.logger.startup()
         
         # Start listening for client connections
@@ -43,7 +42,6 @@ class ProxyServer:
             await self.server.serve_forever()
     
     async def stop(self):
-        """Stop the server gracefully"""
         if self.server:
             self.server.close()
             await self.server.wait_closed()
@@ -52,7 +50,6 @@ class ProxyServer:
         self.logger.shutdown()
     
     async def handle_client_connection(self, reader, writer):
-        """Handle incoming client connections"""
         addr = writer.get_extra_info('peername')
         self.logger.client_connected(addr)
         
@@ -84,7 +81,6 @@ class ProxyServer:
         self.logger.client_disconnected(addr)
     
     async def process_command(self, command):
-        """Process client commands (IAMAT, WHATSAT)"""
         parts = command.split()
         
         if not parts:
@@ -160,7 +156,6 @@ class ProxyServer:
             return f"? {command}"
     
     async def process_server_message(self, server_id, message):
-        """Process messages from other servers"""
         if message.startswith("AT "):
             client_info = parse_at_message(message)
             

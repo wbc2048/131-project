@@ -18,18 +18,6 @@ except ImportError:
     API_KEY = "YOUR_API_KEY_GOES_HERE"  # This will cause API requests to fail
 
 async def get_nearby_places(latitude, longitude, radius_km, limit):
-    """
-    Query the Google Places API for nearby places using the v1 API
-    
-    Args:
-        latitude (float): Latitude in decimal degrees
-        longitude (float): Longitude in decimal degrees
-        radius_km (int): Radius in kilometers (max 50)
-        limit (int): Maximum number of results to return (max 20)
-    
-    Returns:
-        str: JSON response from Google Places API
-    """
     # Convert km to meters for the API
     radius_m = min(radius_km, MAX_RADIUS_KM) * 1000
     

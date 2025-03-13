@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Configuration settings for the proxy herd server application.
-Centralizes all constants and configuration variables.
-"""
 
 # Server information
 SERVER_IDS = ['Bailey', 'Bona', 'Campbell', 'Clark', 'Jaquez']
