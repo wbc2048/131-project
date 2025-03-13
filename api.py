@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+`#!/usr/bin/env python3
 import aiohttp
 import json
 import re
@@ -86,8 +86,7 @@ def parse_location(location_str):
     """
     # Check for valid format
     import re
-    if not re.match(r'^[+-]\d+\.\d+[+-]\d+\.\d+
-, location_str):
+    if not re.match(r'^[+-]\d+\.\d+[+-]\d+\.\d+$', location_str):
         raise ValueError(f"Invalid location format: {location_str}")
     
     # Determine where the longitude starts by finding the sign after the first digit
