@@ -81,7 +81,14 @@ def parse_time_diff(time_diff_str):
         return float(time_diff_str)
 
 def format_flood_message(server_id, client_info):
-    time_diff_str = format_time_diff(client_info['time_diff'])
+    """Format a message for flooding to other servers"""
+    time_diff = client_info['time_diff']
+    
+    # Format time difference with + sign if positive
+    if time_diff >= 0:
+        time_diff_str = f"+{time_diff}"
+    else:
+        time_diff_str = f"{time_diff}"
     
     return (f"AT {server_id} {time_diff_str} {client_info['client_id']} "
             f"{client_info['location']} {client_info['timestamp']}")

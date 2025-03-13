@@ -52,5 +52,5 @@ LOG_LEVEL = 'INFO'  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 PLACES_API_BASE_URL = "https://places.googleapis.com/v1/places:searchNearby"
 PLACES_API_HEADERS = {
     "Content-Type": "application/json",
-    "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.websiteUri,places.types"
+    "X-Goog-FieldMask": "*"
 }

@@ -63,15 +63,9 @@ async def get_nearby_places(latitude, longitude, radius_km, limit):
                 
                 data = await response.json()
                 
-                # Format the JSON with indentation for readability
                 json_str = json.dumps(data, indent=3)
-                
-                # Replace multiple newlines with a single newline as required
-                json_str = re.sub(r'\n{2,}', '\n', json_str)
-                
-                # Remove trailing newlines
-                json_str = json_str.rstrip("\n")
-                
+                json_str = re.sub(r'\n{2,}', '\n', json_str)  # Replace multiple newlines with a single one
+                json_str = json_str.rstrip('\n')  # Remove any trailing newlines
                 return json_str
     
     except Exception as e:
